@@ -14,6 +14,7 @@ interface evolutions{
     number: string
     name: string
     types: string[]
+    image: string
 }
 
 export interface PokemonDetails { 
