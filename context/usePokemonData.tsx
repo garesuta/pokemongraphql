@@ -1,133 +1,145 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useLazyQuery } from "@apollo/client";
 import { GET_POKEMON_DATA, GET_POKEMON_BY_ID } from "../graphql/queries";
 import type { Pokemon, PokemonDetails } from "@/utils/interface";
 
-
 export function usePokemonData() {
-
   const [pokemonsList, setPokemonsList] = useState<Pokemon[]>([]);
-  const [pokemonDetails, setPokemonDetails] = useState(null);
-  const [allPokemons, setAllPokemons] = useState([]);
+  const [pokemonDetails, setPokemonDetails] = useState<PokemonDetails | null>(null);
+  const [allPokemons, setAllPokemons] = useState<Pokemon[]>([]);
   const [pokemonListDetails, setPokemonListDetails] = useState<PokemonDetails[]>([]);
   const [activePokemon, setActivePokemon] = useState<PokemonDetails | null>(null);
   const [search, setSearch] = useState("");
-  // const [searchResults, setSearchResults] = useState([]);
   const [page, setPage] = useState(1);
+  const [loadingSearch, setLoadingSearch] = useState(false);
 
-  // useLazyQuery for many queries in context
+  // Cache to avoid redundant API calls
+  const pokemonDetailsCache = new Map<string, PokemonDetails>();
+
   const [getPokemonsQuery, { loading: loadingPokemons, error: pokemonError }] =
     useLazyQuery(GET_POKEMON_DATA);
   const [getPokemonDetailsQuery, { loading: loadingPokemonDetails, error: pokemonDetailsError }] =
     useLazyQuery(GET_POKEMON_BY_ID);
 
-  // fetch pokemon list
-  const fetchPokemons = async (page: number = 1) => {
-    // Calculate total number of Pokémon to fetch
+  const fetchPokemons = useCallback(async (page: number = 1) => {
     const totalToFetch = page * 20;
 
-    // Clear existing lists
-    await setPokemonsList([]);
-    await setPokemonListDetails([]);
+    setPokemonsList([]);
+    setPokemonListDetails([]);
 
-    // Always fetch from beginning but get enough for the current page
     const result = await getPokemonsQuery({
       variables: {
         amount: totalToFetch,
-        offset: 0
+        offset: 0,
       },
     });
 
-    // console.log(result.data.pokemons);
-
-    if (result.data) {
-      const pokemons = result.data.pokemons;
+    if (result.data?.pokemons) {
+      const pokemons: Pokemon[] = result.data.pokemons;
       setPokemonsList(pokemons);
 
-      // Fetch details for all Pokémon
       const details = await Promise.all(
-        pokemons.map(async (pokemon: Pokemon) => {
-          const result = await getPokemonDetailsQuery({
-            variables: { id: pokemon.id }
-          });
-          return result.data.pokemon;
+        pokemons.map(async (pokemon) => {
+          if (pokemonDetailsCache.has(pokemon.id)) {
+            return pokemonDetailsCache.get(pokemon.id)!;
+          }
+          const res = await getPokemonDetailsQuery({ variables: { id: pokemon.id } });
+          const detail = res.data?.pokemon;
+          if (detail) {
+            pokemonDetailsCache.set(pokemon.id, detail);
+            return detail;
+          }
+          return null;
         })
       );
 
-      setPokemonListDetails(details);
-      // console.log(pokemonListDetails);
-
+      setPokemonListDetails(details.filter(Boolean) as PokemonDetails[]);
     }
 
-    await setPage(page);
-  }
-  // fetch all pokemons
-  const fetchAllPokemons = async () => {
+    setPage(page);
+  }, [getPokemonsQuery, getPokemonDetailsQuery]);
+
+  const fetchAllPokemons = useCallback(async () => {
     const result = await getPokemonsQuery({ variables: { amount: 1000 } });
-    // console.log(result.data.pokemons);
-    if (result.data) {
+    if (result.data?.pokemons) {
       setAllPokemons(result.data.pokemons);
     }
-  }
-  // fetch pokemon details
-  const fetchPokemonDetails = async (id: string) => {
-    const result = await getPokemonDetailsQuery({ variables: { id } });
-    if (result.data) {
-      setPokemonDetails(result.data.pokemon);
-    }
-  }
-  // fetch pokemon details by name
-  const fetchPokemonDetailsByName = async (name: string) => {
-    const result = await getPokemonDetailsQuery({ variables: { name } });
-    console.log(result.data);
+  }, [getPokemonsQuery]);
 
-    if (result.data) {
-      setActivePokemon(result.data.pokemon);
-    }
-  }
-  // search pokemons
-  const searchPokemons = async (query: string) => {
-    // blank search returns all pokemons from the list
-    if (!query) {
-      setSearch("");
-      fetchPokemons();
+  const fetchPokemonDetails = async (id: string) => {
+    if (pokemonDetailsCache.has(id)) {
+      setPokemonDetails(pokemonDetailsCache.get(id)!);
       return;
     }
-    // else filter on the all pokemons list
-    const filteredPokemons = allPokemons.filter((pokemon: Pokemon) => {
-      return pokemon.name.toLowerCase().includes(query.toLowerCase());
-    });
-    // fetch details for filtered pokemons
-    const details = await Promise.all(filteredPokemons.map(async (pokemon: Pokemon) => {
-      const result = await getPokemonDetailsQuery({ variables: { id: pokemon.id } });
-      return result.data.pokemon;
-    }));
-    setPokemonListDetails(details);
+
+    const result = await getPokemonDetailsQuery({ variables: { id } });
+    if (result.data?.pokemon) {
+      pokemonDetailsCache.set(id, result.data.pokemon);
+      setPokemonDetails(result.data.pokemon);
+    }
+  };
+
+  const fetchPokemonDetailsByName = async (name: string) => {
+    const result = await getPokemonDetailsQuery({ variables: { name } });
+    if (result.data?.pokemon) {
+      setActivePokemon(result.data.pokemon);
+    }
+  };
+
+  const searchPokemons = useCallback(async (query: string) => {
+    setLoadingSearch(true);
+    if (!query) {
+      setSearch("");
+      await fetchPokemons(page);
+      setLoadingSearch(false);
+      return;
+    }
+
+    const filteredPokemons = allPokemons.filter((pokemon) =>
+      pokemon.name.toLowerCase().includes(query.toLowerCase())
+    );
+
+    const details = await Promise.all(
+      filteredPokemons.map(async (pokemon) => {
+        if (pokemonDetailsCache.has(pokemon.id)) {
+          return pokemonDetailsCache.get(pokemon.id)!;
+        }
+        const res = await getPokemonDetailsQuery({ variables: { id: pokemon.id } });
+        const detail = res.data?.pokemon;
+        if (detail) {
+          pokemonDetailsCache.set(pokemon.id, detail);
+          return detail;
+        }
+        return null;
+      })
+    );
+
+    setPokemonListDetails(details.filter(Boolean) as PokemonDetails[]);
     setSearch(query);
-  }
-  // Search change function
+    setLoadingSearch(false);
+  }, [allPokemons, getPokemonDetailsQuery, fetchPokemons, page]);
+
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     setSearch(value);
-    searchPokemons(value);
-  }
-  // Form submit function
+  };
+
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     searchPokemons(search);
-  }
-  // Pagination function
-  const loadMorePage = () => {
-    setPage(page + 1);
-  }
+  };
 
-  // initial fetch
+  const loadMorePage = () => {
+    setPage((prev) => prev + 1);
+  };
+
+  // Initial fetch
   useEffect(() => {
-    fetchPokemons();
     fetchAllPokemons();
+    fetchPokemons(page);
   }, []);
 
-  // fetch pokemons on page change
+  // Search debounce
   useEffect(() => {
     const timeout = setTimeout(() => {
       searchPokemons(search);
@@ -146,6 +158,7 @@ export function usePokemonData() {
     activePokemon,
     loadingPokemons,
     loadingPokemonDetails,
+    loadingSearch,
     pokemonError,
     pokemonDetailsError,
     fetchPokemonDetails,
