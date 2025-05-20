@@ -1,0 +1,22 @@
+export const typesWithRandomColors: Record<string, { backgroundColor: string; textColor: string }> = {
+  "all types": { backgroundColor: "#8DDB9E", textColor: "#1B2C1A" },
+  grass: { backgroundColor: "#4ADE80", textColor: "#065F46" },
+  bug: { backgroundColor: "#D87442", textColor: "#3A1A0A" },
+  dark: { backgroundColor: "#6242E2", textColor: "#EAE4FF" },
+  dragon: { backgroundColor: "#2AA5D4", textColor: "#06232C" },
+  electric: { backgroundColor: "#E6DB3C", textColor: "#3D3A00" },
+  fairy: { backgroundColor: "#FC6CCF", textColor: "#3C1030" },
+  fighting: { backgroundColor: "#F75E58", textColor: "#2D0D0B" },
+  fire: { backgroundColor: "#FD9A3C", textColor: "#3C2205" },
+  flying: { backgroundColor: "#9EB7F5", textColor: "#1B2D5A" },
+  ghost: { backgroundColor: "#6B4BB7", textColor: "#EFEAFF" },
+  ground: { backgroundColor: "#CEB257", textColor: "#2E250C" },
+  ice: { backgroundColor: "#7EE4F8", textColor: "#04363C" },
+  normal: { backgroundColor: "#C5C4C0", textColor: "#222" },
+  poison: { backgroundColor: "#B365C9", textColor: "#2B0F31" },
+  psychic: { backgroundColor: "#F66CB2", textColor: "#3F1128" },
+  rock: { backgroundColor: "#BBA75B", textColor: "#2F2B08" },
+  steel: { backgroundColor: "#9EAAB7", textColor: "#15191D" },
+  water: { backgroundColor: "#51A7F9", textColor: "#002C50" },
+};
+
