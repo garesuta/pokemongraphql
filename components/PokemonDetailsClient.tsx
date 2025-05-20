@@ -55,7 +55,7 @@ const PokemonDetailsClient: FC<Props> = ({ id }) => {
                                         {activePokemon.name} <span className="text-gray-500">#{activePokemon.number}</span>
                                     </h2>
                                     {/* <p className="mb-2"><strong>Types:</strong> {activePokemon.types.join(', ')}</p> */}
-                                    <div className="mt-2 flex flex-wrap gap-2">
+                                    <div className="mt-8 flex flex-wrap gap-2">
                                         <p className="font-bold mt-1">Type:</p> {activePokemon.types.map((type, index) => {
                                             const color = typesWithRandomColors[type.toLowerCase()]; // Fallback to black if type not found  
                                             return (
@@ -69,9 +69,35 @@ const PokemonDetailsClient: FC<Props> = ({ id }) => {
                                             )
                                         })}
                                     </div>
-                                    <p className="mb-2"><strong>Resistant:</strong> {activePokemon.resistant.join(', ')}</p>
-                                    <p className="mb-2"><strong>Weaknesses:</strong> {activePokemon.weaknesses.join(', ')}</p>
-                                    <div className="mb-2">
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                        <p className="font-bold mt-1">Resistant: </p> {activePokemon.resistant.map((type, index) => {
+                                            const color = typesWithRandomColors[type.toLowerCase()]; // Fallback to black if type not found  
+                                            return (
+                                                <span
+                                                    key={index}
+                                                    style={{ backgroundColor: color.backgroundColor, color: color.textColor }}
+                                                    className={`py-1 px-3 rounded-full text-xs hover:bg-blue-500/20 hover:shadow-[0_2px_8px_rgb(59,130,246,0.2)] transition-all`}
+                                                >
+                                                    {type}
+                                                </span>
+                                            )
+                                        })}
+                                    </div>
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                        <p className="font-bold mt-1">Weaknesses:  </p> {activePokemon.weaknesses.map((type, index) => {
+                                            const color = typesWithRandomColors[type.toLowerCase()]; // Fallback to black if type not found  
+                                            return (
+                                                <span
+                                                    key={index}
+                                                    style={{ backgroundColor: color.backgroundColor, color: color.textColor }}
+                                                    className={`py-1 px-3 rounded-full text-xs hover:bg-blue-500/20 hover:shadow-[0_2px_8px_rgb(59,130,246,0.2)] transition-all`}
+                                                >
+                                                    {type}
+                                                </span>
+                                            )
+                                        })}
+                                    </div>
+                                    <div className="mb-2 mt-4">
                                         <strong>Fast Attacks:</strong>
                                         <ul className="list-disc list-inside">
                                             {activePokemon.attacks.fast.map((atk) => (
