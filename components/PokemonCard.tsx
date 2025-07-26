@@ -4,6 +4,7 @@ import { typesWithRandomColors } from "@/utils/typeList"
 import type { PokemonDetails } from "@/utils/interface"
 import Link from "next/link"
 import { memo, useState } from "react"
+import { useRouter } from "next/navigation"
 
 interface PokemonCardProps {
     pokemon: PokemonDetails
@@ -15,6 +16,7 @@ const PokemonCard = memo(function PokemonCard({ pokemon }: PokemonCardProps) {
     const typeColor = typesWithRandomColors[primaryType]
     const [showEvolutions, setShowEvolutions] = useState(false)
     const [showAttacks, setShowAttacks] = useState(false)
+    const router = useRouter()
     
     return (
         <Link href={`/pokemon/${pokemon.name}`} className="block group h-full">
@@ -107,14 +109,17 @@ const PokemonCard = memo(function PokemonCard({ pokemon }: PokemonCardProps) {
                                 {showEvolutions && (
                                     <div className="mt-2 space-y-1">
                                         {pokemon.evolutions.map((evolution) => (
-                                            <Link
+                                            <button
                                                 key={evolution.id}
-                                                href={`/pokemon/${evolution.name}`}
-                                                onClick={(e) => e.stopPropagation()}
-                                                className="block px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded transition-colors capitalize"
+                                                onClick={(e) => {
+                                                    e.preventDefault()
+                                                    e.stopPropagation()
+                                                    router.push(`/pokemon/${evolution.name}`)
+                                                }}
+                                                className="block w-full text-left px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded transition-colors capitalize"
                                             >
                                                 {evolution.name} #{evolution.number}
-                                            </Link>
+                                            </button>
                                         ))}
                                     </div>
                                 )}

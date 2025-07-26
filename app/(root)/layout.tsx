@@ -13,12 +13,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
-        <ApolloWrapper>
-            <ContextProvider>
-                <html lang="en">
-                    <body className="bg-gray-100">{children}</body>
-                </html>
-            </ContextProvider>
-        </ApolloWrapper>
+        <html lang="en">
+            <body className="bg-gray-100">
+                <ApolloWrapper>
+                    <ContextProvider>
+                        {children}
+                    </ContextProvider>
+                </ApolloWrapper>
+            </body>
+        </html>
     );
 }
