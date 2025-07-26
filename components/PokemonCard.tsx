@@ -3,12 +3,13 @@ import Image from "next/image"
 import { typesWithRandomColors } from "@/utils/typeList"
 import type { PokemonDetails } from "@/utils/interface"
 import Link from "next/link"
+import { memo } from "react"
 
 interface PokemonCardProps {
     pokemon: PokemonDetails
 }
 
-function PokemonCard({ pokemon }: PokemonCardProps) {
+const PokemonCard = memo(function PokemonCard({ pokemon }: PokemonCardProps) {
     return (
         <div className="bg-white shadow-md rounded-lg p-4">
             <h2 className="text-xl font-bold bg-gradient-to-l from-gray-100 to-gray-50 rounded-lg p-2 shadow-[0_2px_8px_rgb(59,130,246,0.2)] z-10 relative">
@@ -21,9 +22,10 @@ function PokemonCard({ pokemon }: PokemonCardProps) {
                     src={pokemon.image}
                     alt={pokemon.name}
                     className="w-[220px] h-[220px] object-contain self-center"
-                    priority={true}
+                    loading="lazy"
                     height={220}
                     width={220}
+                    sizes="220px"
                     style={{ zIndex: 0, position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)" }}
                 />
             </div>
@@ -100,5 +102,5 @@ function PokemonCard({ pokemon }: PokemonCardProps) {
 
         </div>
     );
-}
+});
 export default PokemonCard

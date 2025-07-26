@@ -18,7 +18,7 @@ const PokemonDetailsClient: FC<Props> = ({ id }) => {
 
     React.useEffect(() => {
         fetchPokemonDetailsByName(id);
-    }, [id]);
+    }, [id, fetchPokemonDetailsByName]);
 
     // console.log("activePokemon", activePokemon);
     // console.log("params", id);

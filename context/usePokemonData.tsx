@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useLazyQuery } from "@apollo/client";
 import { GET_POKEMON_DATA, GET_POKEMON_BY_ID } from "../graphql/queries";
 import type { Pokemon, PokemonDetails } from "@/utils/interface";
@@ -13,8 +13,8 @@ export function usePokemonData() {
   const [page, setPage] = useState(1);
   const [loadingSearch, setLoadingSearch] = useState(false);
 
-  // Cache to avoid redundant API calls
-  const pokemonDetailsCache = new Map<string, PokemonDetails>();
+  // Cache to avoid redundant API calls - use useMemo to persist across renders
+  const pokemonDetailsCache = useMemo(() => new Map<string, PokemonDetails>(), []);
 
   const [getPokemonsQuery, { loading: loadingPokemons, error: pokemonError }] =
     useLazyQuery(GET_POKEMON_DATA);
@@ -66,7 +66,7 @@ export function usePokemonData() {
     }
   }, [getPokemonsQuery]);
 
-  const fetchPokemonDetails = async (id: string) => {
+  const fetchPokemonDetails = useCallback(async (id: string) => {
     if (pokemonDetailsCache.has(id)) {
       setPokemonDetails(pokemonDetailsCache.get(id)!);
       return;
@@ -77,14 +77,14 @@ export function usePokemonData() {
       pokemonDetailsCache.set(id, result.data.pokemon);
       setPokemonDetails(result.data.pokemon);
     }
-  };
+  }, [getPokemonDetailsQuery, pokemonDetailsCache]);
 
-  const fetchPokemonDetailsByName = async (name: string) => {
+  const fetchPokemonDetailsByName = useCallback(async (name: string) => {
     const result = await getPokemonDetailsQuery({ variables: { name } });
     if (result.data?.pokemon) {
       setActivePokemon(result.data.pokemon);
     }
-  };
+  }, [getPokemonDetailsQuery]);
 
   const searchPokemons = useCallback(async (query: string) => {
     setLoadingSearch(true);
@@ -119,19 +119,19 @@ export function usePokemonData() {
     setLoadingSearch(false);
   }, [allPokemons, getPokemonDetailsQuery, fetchPokemons, page]);
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     setSearch(value);
-  };
+  }, []);
 
-  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleFormSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     searchPokemons(search);
-  };
+  }, [searchPokemons, search]);
 
-  const loadMorePage = () => {
+  const loadMorePage = useCallback(() => {
     setPage((prev) => prev + 1);
-  };
+  }, []);
 
   // Initial fetch
   useEffect(() => {

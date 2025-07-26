@@ -1,12 +1,13 @@
 'use client'
 import NavBar from "@/components/NavBar";
 import PokemonCard from "@/components/PokemonCard";
+import PokemonCardSkeleton from "@/components/PokemonCardSkeleton";
 import { useGlobalContext } from "@/context/globalContext";
 import type { PokemonDetails } from "@/utils/interface";
 import SearchForm from "@/components/SearchForm";
 
 export default function HomePage() {
-    const { pokemonListDetails, search, loadMorePage } = useGlobalContext();
+    const { pokemonListDetails, search, loadMorePage, loadingPokemons, loadingSearch } = useGlobalContext();
 
     return (
         <div>
@@ -25,7 +26,11 @@ export default function HomePage() {
                     )
                 )}
                 <div className="px-16 py-8 grid gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                    {pokemonListDetails.map((pokemon: PokemonDetails, index) => <PokemonCard key={index} pokemon={pokemon} />)}
+                    {(loadingPokemons || loadingSearch) ? (
+                        Array.from({ length: 8 }, (_, index) => <PokemonCardSkeleton key={`skeleton-${index}`} />)
+                    ) : (
+                        pokemonListDetails.map((pokemon: PokemonDetails, index) => <PokemonCard key={pokemon.id || index} pokemon={pokemon} />)
+                    )}
                 </div>
             </section>
             {pokemonListDetails.length > 19 && (
