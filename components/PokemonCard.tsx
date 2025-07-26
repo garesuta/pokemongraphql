@@ -3,104 +3,197 @@ import Image from "next/image"
 import { typesWithRandomColors } from "@/utils/typeList"
 import type { PokemonDetails } from "@/utils/interface"
 import Link from "next/link"
-import { memo } from "react"
+import { memo, useState } from "react"
 
 interface PokemonCardProps {
     pokemon: PokemonDetails
 }
 
 const PokemonCard = memo(function PokemonCard({ pokemon }: PokemonCardProps) {
+    // Get primary type for card theming
+    const primaryType = pokemon.types[0]?.toLowerCase() || 'normal'
+    const typeColor = typesWithRandomColors[primaryType]
+    const [showEvolutions, setShowEvolutions] = useState(false)
+    const [showAttacks, setShowAttacks] = useState(false)
+    
     return (
-        <div className="bg-white shadow-md rounded-lg p-4">
-            <h2 className="text-xl font-bold bg-gradient-to-l from-gray-100 to-gray-50 rounded-lg p-2 shadow-[0_2px_8px_rgb(59,130,246,0.2)] z-10 relative">
-                <Link href={`/pokemon/${pokemon.name}`} className="hover:cursor-context-menu">
-                    {pokemon.name}
-                </Link>
-            </h2>
-            <div className="flex justify-center items-center overflow-hidden rounded-lg w-full h-[220px] relative z-0 mt-4">
-                <Image
-                    src={pokemon.image}
-                    alt={pokemon.name}
-                    className="w-[220px] h-[220px] object-contain self-center"
-                    loading="lazy"
-                    height={220}
-                    width={220}
-                    sizes="220px"
-                    style={{ zIndex: 0, position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)" }}
-                />
-            </div>
-            <div className="text-2xl flex justify-center items-center rounded-2xl bg-fuchsia-50 mt-4">{pokemon.number}</div>
-            <div className="mt-4 text-xs flex flex-wrap gap-2">
-                <p className="font-bold mt-1">Type:</p> {pokemon.types.map((type, index) => {
-                    const color = typesWithRandomColors[type.toLowerCase()]; // Fallback to black if type not found  
-                    return (
-                        <span
-                            key={index}
-                            style={{ backgroundColor: color.backgroundColor, color: color.textColor }}
-                            className={`py-1 px-3 rounded-full text-xs hover:bg-blue-500/20 hover:shadow-[0_2px_8px_rgb(59,130,246,0.2)] transition-all`}
+        <Link href={`/pokemon/${pokemon.name}`} className="block group h-full">
+            <div 
+                className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 group-hover:-translate-y-1 h-full flex flex-col"
+                style={{
+                    background: `linear-gradient(135deg, ${typeColor.backgroundColor}15 0%, white 25%)`
+                }}
+            >
+                {/* Header with name and number - Fixed height */}
+                <div className="p-4 pb-2 flex-shrink-0">
+                    <div className="flex justify-between items-start mb-2">
+                        <h3 className="text-lg font-bold text-gray-800 capitalize truncate pr-2 leading-tight">
+                            {pokemon.name}
+                        </h3>
+                        <span 
+                            className="text-sm font-semibold px-2 py-1 rounded-full shrink-0"
+                            style={{
+                                backgroundColor: typeColor.backgroundColor,
+                                color: typeColor.textColor
+                            }}
                         >
-                            {type}
+                            #{pokemon.number}
                         </span>
-                    )
-                })}
-            </div>
-            <div className="mt-2 flex flex-col gap-2">
-                <h3 className="text-sm font-semibold text-white bg-black rounded-lg px-2 w-[80px]">Attack</h3>
-                <div className="list-disc list-inside">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-gradient-to-b from-amber-100 to-amber-50 rounded-lg p-2 shadow-[0_2px_8px_rgb(59,130,246,0.2)]">
-                            <p className="text-sm rounded-lg py-1 px-1 font-bold">Fast Attack :</p>
-                            <div className="flex flex-wrap gap-2 mt-1">
-                                {pokemon.attacks.fast.map((attack, index) => (
-                                    <span
-                                        key={index}
-                                        className="py-1 px-3 rounded-full text-xs bg-gray-300 hover:bg-gray-400/20 hover:shadow-[0_2px_8px_rgb(59,130,246,0.2)] transition-all"
+                    </div>
+                    
+                    {/* Types - Fixed height container */}
+                    <div className="h-8 flex flex-wrap gap-1 overflow-hidden">
+                        {pokemon.types.slice(0, 2).map((type, index) => {
+                            const color = typesWithRandomColors[type.toLowerCase()]
+                            return (
+                                <span
+                                    key={index}
+                                    className="px-2 py-1 rounded-md text-xs font-medium capitalize"
+                                    style={{
+                                        backgroundColor: color.backgroundColor,
+                                        color: color.textColor
+                                    }}
+                                >
+                                    {type}
+                                </span>
+                            )
+                        })}
+                    </div>
+                </div>
+
+                {/* Pokemon Image - Fixed height */}
+                <div className="relative h-48 flex items-center justify-center flex-shrink-0 p-4"
+                     style={{
+                         background: `linear-gradient(135deg, ${typeColor.backgroundColor}15 0%, white 25%)`
+                     }}>
+                    <Image
+                        src={pokemon.image}
+                        alt={pokemon.name}
+                        className="w-36 h-36 object-contain group-hover:scale-110 transition-transform duration-300"
+                        loading="lazy"
+                        height={144}
+                        width={144}
+                        sizes="144px"
+                    />
+                </div>
+
+                {/* Footer - Fixed height */}
+                <div className="p-4 pt-3 flex-1 flex flex-col justify-between min-h-[80px]">
+                    {/* Evolution section */}
+                    <div className="flex-1">
+                        {Array.isArray(pokemon.evolutions) && pokemon.evolutions.length > 0 ? (
+                            <div className="text-sm">
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        setShowEvolutions(!showEvolutions)
+                                    }}
+                                    className="flex items-center gap-1 text-gray-600 hover:text-gray-800 transition-colors w-full text-left"
+                                >
+                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                                    </svg>
+                                    <span className="font-medium">{pokemon.evolutions.length} Evolution{pokemon.evolutions.length > 1 ? 's' : ''}</span>
+                                    <svg 
+                                        className={`w-3 h-3 ml-1 transition-transform ${showEvolutions ? 'rotate-180' : ''}`} 
+                                        fill="currentColor" 
+                                        viewBox="0 0 20 20"
                                     >
-                                        {attack.name} ({attack.type})
-                                    </span>
-                                ))}
+                                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                    </svg>
+                                </button>
+                                
+                                {showEvolutions && (
+                                    <div className="mt-2 space-y-1">
+                                        {pokemon.evolutions.map((evolution) => (
+                                            <Link
+                                                key={evolution.id}
+                                                href={`/pokemon/${evolution.name}`}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="block px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded transition-colors capitalize"
+                                            >
+                                                {evolution.name} #{evolution.number}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
-                        </div>
-                        <div className="bg-gradient-to-b from-amber-700/10 to-amber-500/10 rounded-lg p-2 shadow-[0_2px_8px_rgb(59,130,246,0.2)]">
-                            <p className="text-sm rounded-lg py-1 px-1 font-bold">Special Attack :</p>
-                            <div className="flex flex-wrap gap-2 mt-1">
-                                {pokemon.attacks.special.map((attack, index) => (
-                                    <span
-                                        key={index}
-                                        className="py-1 px-3 rounded-full text-xs text-white bg-gray-700 hover:bg-gray-500/20 hover:shadow-[0_2px_8px_rgb(59,130,246,0.2)] transition-all"
+                        ) : (
+                            <div className="h-5"></div>
+                        )}
+                    </div>
+                    
+                    {/* Attack section - Expandable */}
+                    <div className="text-xs">
+                        {(pokemon.attacks.fast.length > 0 || pokemon.attacks.special.length > 0) ? (
+                            <div>
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        setShowAttacks(!showAttacks)
+                                    }}
+                                    className="flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors w-full text-left"
+                                >
+                                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span className="font-medium">
+                                        {pokemon.attacks.fast.length + pokemon.attacks.special.length} Attack{(pokemon.attacks.fast.length + pokemon.attacks.special.length) > 1 ? 's' : ''}
+                                    </span>
+                                    <svg 
+                                        className={`w-3 h-3 ml-1 transition-transform ${showAttacks ? 'rotate-180' : ''}`} 
+                                        fill="currentColor" 
+                                        viewBox="0 0 20 20"
                                     >
-                                        {attack.name} ({attack.type})
-                                    </span>
-                                ))}
+                                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                    </svg>
+                                </button>
+                                
+                                {showAttacks && (
+                                    <div className="mt-2 space-y-2">
+                                        {pokemon.attacks.fast.length > 0 && (
+                                            <div>
+                                                <div className="font-semibold text-gray-600 mb-1">Fast Attacks:</div>
+                                                <div className="space-y-1">
+                                                    {pokemon.attacks.fast.map((attack, index) => (
+                                                        <div
+                                                            key={index}
+                                                            className="px-2 py-1 bg-blue-50 text-blue-800 rounded text-xs"
+                                                        >
+                                                            {attack.name} ({attack.type}) - {attack.damage} dmg
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                        
+                                        {pokemon.attacks.special.length > 0 && (
+                                            <div>
+                                                <div className="font-semibold text-gray-600 mb-1">Special Attacks:</div>
+                                                <div className="space-y-1">
+                                                    {pokemon.attacks.special.map((attack, index) => (
+                                                        <div
+                                                            key={index}
+                                                            className="px-2 py-1 bg-purple-50 text-purple-800 rounded text-xs"
+                                                        >
+                                                            {attack.name} ({attack.type}) - {attack.damage} dmg
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
-                        </div>
+                        ) : (
+                            <div className="h-6"></div>
+                        )}
                     </div>
                 </div>
             </div>
-            {Array.isArray(pokemon.evolutions) && pokemon.evolutions.length > 0 && (
-                <div className="mt-2 bg-gradient-to-b from-blue-200 to-cyan-200/20 rounded-lg p-2 shadow-[0_2px_8px_rgb(59,130,246,0.2)]">
-                    <h3 className="text-sm font-semibold text-white bg-gray-700 rounded-lg px-2 w-[80px]">Evolutions</h3>
-                    <div className="list-disc list-inside">
-                        <div className="mt-2">
-                            <div className="flex flex-wrap gap-2 mt-1">
-                                {pokemon.evolutions.map((evolution, index) => (
-                                    <Link
-                                        key={index}
-                                        href={`/pokemon/${evolution.name}`}
-                                        className="py-1 px-3 rounded-full text-xs bg-blue-300 hover:bg-blue-400/20 hover:shadow-[0_2px_8px_rgb(59,130,246,0.2)] transition-all"
-                                    >
-                                        {evolution.name}
-                                    </Link>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-
-
-        </div>
+        </Link>
     );
 });
 export default PokemonCard
